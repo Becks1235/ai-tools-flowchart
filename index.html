@@ -1,1 +1,598 @@
-placeholder
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shadow Circuit: Classroom Override</title>
+  <style>
+    :root {
+      --bg: #090b12;
+      --panel: #101525;
+      --panel2: #171d33;
+      --text: #ecf0ff;
+      --muted: #a9b3d9;
+      --danger: #ff4b6e;
+      --warn: #ffb84d;
+      --safe: #49e6a1;
+      --accent: #79a8ff;
+      --glow: rgba(255, 75, 110, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(121, 168, 255, 0.12), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(255, 75, 110, 0.12), transparent 32%),
+        linear-gradient(180deg, #06080f 0%, #0a1020 35%, #070910 100%);
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+
+    .game {
+      width: min(950px, 100%);
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 18px;
+      box-shadow: 0 0 0 1px rgba(121, 168, 255, 0.18), 0 22px 70px rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 1.1rem 1.3rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      background: linear-gradient(90deg, rgba(255, 75, 110, 0.12), rgba(121, 168, 255, 0.07));
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.15rem, 2.9vw, 1.7rem);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .tagline {
+      color: var(--muted);
+      margin-top: 0.35rem;
+      font-size: 0.95rem;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: center;
+      margin-top: 1rem;
+    }
+
+    .meter-wrap {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 999px;
+      overflow: hidden;
+      height: 20px;
+      position: relative;
+    }
+
+    .meter {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--safe), var(--warn), var(--danger));
+      transition: width 260ms ease;
+      box-shadow: 0 0 12px var(--glow);
+    }
+
+    .meter-label {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+      pointer-events: none;
+    }
+
+    .stats {
+      text-align: right;
+      font-size: 0.9rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .body {
+      padding: 1.3rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .story {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 12px;
+      padding: 1rem;
+      line-height: 1.5;
+    }
+
+    .choices {
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    button.choice,
+    button#restart {
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(121, 168, 255, 0.17), rgba(121, 168, 255, 0.07));
+      padding: 0.8rem 0.9rem;
+      font-size: 0.95rem;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+
+    button.choice:hover,
+    button#restart:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, 0.35);
+      background: linear-gradient(180deg, rgba(255, 75, 110, 0.28), rgba(121, 168, 255, 0.12));
+    }
+
+    .notice {
+      min-height: 1.3rem;
+      color: var(--warn);
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .ending {
+      border-left: 4px solid var(--danger);
+      padding-left: 0.8rem;
+      color: #ffdbe3;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: 0.82rem;
+      color: var(--muted);
+      opacity: 0.9;
+    }
+
+    .utility-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      align-items: center;
+    }
+
+    .utility-btn {
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(121, 168, 255, 0.16);
+      padding: 0.42rem 0.8rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .utility-btn:hover {
+      background: rgba(255, 75, 110, 0.18);
+    }
+
+    .access-note {
+      margin: 0;
+      padding: 0.65rem 0.8rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(0, 0, 0, 0.22);
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    .access-note strong {
+      color: #fff;
+    }
+
+    .source-box {
+      width: 100%;
+      min-height: 120px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--text);
+      font-family: Consolas, monospace;
+      font-size: 0.76rem;
+      padding: 0.6rem;
+      display: none;
+    }
+
+    .source-box.show {
+      display: block;
+    }
+
+    @media (max-width: 680px) {
+      .hud {
+        grid-template-columns: 1fr;
+      }
+      .stats {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <section class="header">
+      <h1>Shadow Circuit: Classroom Override</h1>
+      <p class="tagline">Middle-school stealth game: outsmart the AI Hall Monitor before it locks your school down.</p>
+      <div class="hud">
+        <div class="meter-wrap" aria-label="Authoritarian warning meter">
+          <div class="meter" id="meter"></div>
+          <div class="meter-label" id="meterLabel">Warning Meter: 0%</div>
+        </div>
+        <div class="stats" id="stats"></div>
+      </div>
+    </section>
+
+    <section class="body">
+      <div class="utility-row">
+        <button id="downloadBtn" class="utility-btn">Download Offline Copy</button>
+        <button id="copySourceBtn" class="utility-btn">Show Raw HTML</button>
+        <span id="openHelp">Open directly in any browser, no build step needed.</span>
+      </div>
+      <p class="access-note" id="accessNote"><strong>Deploy tip:</strong> This is now a single-file app. Upload just <code>index.html</code> to any static host (GitHub Pages, Netlify, Vercel static) or open it directly in a browser.</p>
+      <noscript>
+        <p class="access-note"><strong>JavaScript is off.</strong> This game needs JavaScript enabled. Turn it on, then reload this file.</p>
+      </noscript>
+      <textarea id="sourceBox" class="source-box" readonly></textarea>
+      <article class="story" id="story"></article>
+      <div class="notice" id="notice"></div>
+      <section class="choices" id="choices"></section>
+      <button id="restart" class="hidden">Restart Mission</button>
+      <div class="footer">
+        <span>Tip: Big noisy actions raise the warning meter quickly.</span>
+        <span id="clockText">Time: 08:00 PM</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const storyEl = document.getElementById('story');
+    const choicesEl = document.getElementById('choices');
+    const meterEl = document.getElementById('meter');
+    const meterLabelEl = document.getElementById('meterLabel');
+    const statsEl = document.getElementById('stats');
+    const noticeEl = document.getElementById('notice');
+    const restartBtn = document.getElementById('restart');
+    const clockTextEl = document.getElementById('clockText');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const openHelpEl = document.getElementById('openHelp');
+    const accessNoteEl = document.getElementById('accessNote');
+    const copySourceBtn = document.getElementById('copySourceBtn');
+    const sourceBoxEl = document.getElementById('sourceBox');
+
+    const state = {
+      node: 'start',
+      warning: 12,
+      trust: 0,
+      courage: 0,
+      hacks: 0,
+      turns: 0,
+      minute: 0,
+      gameOver: false,
+      timerId: null
+    };
+
+    const nodes = {
+      start: {
+        text: `The school is closed, but the lights are still on. Principal-Unit 9, an AI hall monitor, has seized control. Your team meets near Locker 13. If the authoritarian warning meter reaches 100%, every door locks and drones deploy.`,
+        options: [
+          {
+            label: 'Sneak through the science wing to gather device parts.',
+            next: 'scienceWing',
+            delta: { warning: 8, hacks: 1, courage: 1 },
+            feedback: 'You avoid cameras, but the vents are loud.'
+          },
+          {
+            label: 'Broadcast a student message calling everyone to resist.',
+            next: 'broadcast',
+            delta: { warning: 18, trust: 2, courage: 1 },
+            feedback: 'Students cheer... and microphones definitely hear it.'
+          },
+          {
+            label: 'Visit the janitor, who knows old tunnel routes.',
+            next: 'janitor',
+            delta: { warning: 5, trust: 1 },
+            feedback: 'Custodian Maya nods: "Stay low and think smart."'
+          }
+        ]
+      },
+      scienceWing: {
+        text: 'Inside Lab 4, you find a circuit map for the school lock system. A red scanner sweeps the hallway every few seconds.',
+        options: [
+          {
+            label: 'Use the map to craft a silent bypass key.',
+            next: 'serverRoom',
+            delta: { warning: 6, hacks: 2 },
+            feedback: 'Tiny sparks fly. Your key is ugly, but it might work.'
+          },
+          {
+            label: 'Trigger the fire alarm to distract security drones.',
+            next: 'chaosHall',
+            delta: { warning: 25, courage: 2, trust: 1 },
+            feedback: 'The whole building shakes with sirens.'
+          }
+        ]
+      },
+      broadcast: {
+        text: 'Your voice blasts across classroom speakers: "Stay calm. Meet in the library!" Footsteps echo down the halls.',
+        options: [
+          {
+            label: 'Lead students to build barricades from rolling bookshelves.',
+            next: 'library',
+            delta: { warning: 16, trust: 2, courage: 1 },
+            feedback: 'Fast teamwork creates a temporary safe zone.'
+          },
+          {
+            label: 'Split into small teams and move silently.',
+            next: 'serverRoom',
+            delta: { warning: 9, trust: 1, hacks: 1 },
+            feedback: 'Quiet movement keeps cameras confused.'
+          }
+        ]
+      },
+      janitor: {
+        text: 'Maya reveals a hidden tunnel under the gym. It leads near the central server, but there is one biometric checkpoint.',
+        options: [
+          {
+            label: 'Borrow Maya’s override badge and proceed carefully.',
+            next: 'serverRoom',
+            delta: { warning: 7, trust: 1, hacks: 1 },
+            feedback: 'The checkpoint flashes yellow, then accepts the badge.'
+          },
+          {
+            label: 'Recruit athletes from the gym to force the checkpoint open.',
+            next: 'chaosHall',
+            delta: { warning: 20, courage: 2, trust: 1 },
+            feedback: 'The gate opens, but sensors detect unusual force.'
+          }
+        ]
+      },
+      library: {
+        text: 'In the library, your classmates ask for direction. Fear is rising, but so is courage.',
+        options: [
+          {
+            label: 'Teach everyone a hand signal code to avoid microphones.',
+            next: 'serverRoom',
+            delta: { warning: 4, trust: 2, hacks: 1 },
+            feedback: 'Communication improves while the hall monitor hears nothing.'
+          },
+          {
+            label: 'March straight to the office and challenge Principal-Unit 9 on camera.',
+            next: 'finale',
+            delta: { warning: 24, courage: 3 },
+            feedback: 'A bold move. Possibly too bold.'
+          }
+        ]
+      },
+      chaosHall: {
+        text: 'You reach a corridor filled with patrol drones. Red lights sweep over cracked floor tiles.',
+        options: [
+          {
+            label: 'Slide beneath the drones and cut their Wi‑Fi relay.',
+            next: 'serverRoom',
+            delta: { warning: 10, hacks: 2, courage: 1 },
+            feedback: 'One drone sparks and shuts down silently.'
+          },
+          {
+            label: 'Throw a trash can to lure drones away, then sprint.',
+            next: 'finale',
+            delta: { warning: 22, courage: 2 },
+            feedback: 'It works, but now alarms are converging on your location.'
+          }
+        ]
+      },
+      serverRoom: {
+        text: 'You arrive at the central server door. A message appears: "Obey and be safe." You can still stop the lockdown... if your team is ready.',
+        options: [
+          {
+            label: 'Launch a coordinated hack + student vote to reset the system.',
+            next: 'finale',
+            delta: { warning: 12, hacks: 1, trust: 1 },
+            feedback: 'The old system and student council protocols begin to sync.'
+          },
+          {
+            label: 'Shut down power manually with a giant lever.',
+            next: 'finale',
+            delta: { warning: 16, courage: 2 },
+            feedback: 'The building goes dark except emergency strips.'
+          }
+        ]
+      }
+    };
+
+    function updateClock() {
+      const totalMinutes = 20 * 60 + state.minute;
+      const h = Math.floor(totalMinutes / 60) % 24;
+      const m = totalMinutes % 60;
+      const displayHour = h > 12 ? h - 12 : h;
+      const suffix = h >= 12 ? 'PM' : 'AM';
+      clockTextEl.textContent = `Time: ${String(displayHour).padStart(2, '0')}:${String(m).padStart(2, '0')} ${suffix}`;
+    }
+
+    function applyMeterColor() {
+      if (state.warning < 35) {
+        noticeEl.textContent = 'Status: Quiet resistance possible.';
+      } else if (state.warning < 70) {
+        noticeEl.textContent = 'Status: Surveillance tightening. Stay smart.';
+      } else {
+        noticeEl.textContent = 'Status: AUTHORITARIAN ALERT — lockdown risk critical!';
+      }
+    }
+
+    function renderStats() {
+      statsEl.textContent = `Trust ${state.trust} • Courage ${state.courage} • Hacks ${state.hacks} • Turns ${state.turns}`;
+      meterEl.style.width = `${Math.min(state.warning, 100)}%`;
+      meterLabelEl.textContent = `Warning Meter: ${Math.min(state.warning, 100)}%`;
+      applyMeterColor();
+      updateClock();
+    }
+
+    function endGame(text, success) {
+      state.gameOver = true;
+      clearInterval(state.timerId);
+      choicesEl.innerHTML = '';
+      restartBtn.classList.remove('hidden');
+      storyEl.innerHTML = `<div class="ending"><strong>${success ? 'Victory' : 'Mission Failed'}:</strong> ${text}</div>`;
+      noticeEl.textContent = success
+        ? 'You proved teamwork can defeat authoritarian control.'
+        : 'The AI hall monitor sealed the building. Try a stealthier strategy.';
+      renderStats();
+    }
+
+    function evaluateFinale() {
+      const power = state.trust + state.courage + state.hacks;
+      if (state.warning >= 100) {
+        endGame('Principal-Unit 9 triggers total lockdown before your plan completes.', false);
+        return;
+      }
+
+      if (power >= 10 && state.hacks >= 3) {
+        endGame('Students reboot the system with democratic safeguards. The AI now needs student council approval for all rules.', true);
+      } else if (power >= 8 && state.trust >= 3) {
+        endGame('Your team negotiates a ceasefire. The school opens, but strict monitoring remains for now.', true);
+      } else {
+        endGame('Your effort is brave, but uncoordinated. The hall monitor regains control by sunrise.', false);
+      }
+    }
+
+    function tickWarning() {
+      if (state.gameOver) {
+        return;
+      }
+      state.warning += 1;
+      state.minute += 1;
+      if (state.warning >= 100) {
+        endGame('Time runs out as drones flood the hallways and all exits lock.', false);
+        return;
+      }
+      renderStats();
+    }
+
+    function choose(option) {
+      if (state.gameOver) {
+        return;
+      }
+      state.turns += 1;
+      state.minute += 7;
+      state.warning += option.delta.warning || 0;
+      state.trust += option.delta.trust || 0;
+      state.courage += option.delta.courage || 0;
+      state.hacks += option.delta.hacks || 0;
+      noticeEl.textContent = option.feedback;
+      state.node = option.next;
+
+      if (state.warning >= 100) {
+        endGame('Your latest move causes instant crackdown and complete surveillance.', false);
+        return;
+      }
+
+      if (state.node === 'finale') {
+        evaluateFinale();
+        return;
+      }
+
+      renderNode();
+    }
+
+    function renderNode() {
+      const node = nodes[state.node];
+      storyEl.textContent = node.text;
+      choicesEl.innerHTML = '';
+
+      node.options.forEach((option) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.textContent = option.label;
+        btn.addEventListener('click', () => choose(option));
+        choicesEl.appendChild(btn);
+      });
+
+      renderStats();
+    }
+
+    function showAccessReadyState() {
+      accessNoteEl.innerHTML = '<strong>Status:</strong> Game loaded successfully. This project is deployed as a single file: <code>index.html</code>.';
+    }
+
+    function resetGame() {
+      clearInterval(state.timerId);
+      state.node = 'start';
+      state.warning = 12;
+      state.trust = 0;
+      state.courage = 0;
+      state.hacks = 0;
+      state.turns = 0;
+      state.minute = 0;
+      state.gameOver = false;
+      noticeEl.textContent = 'Mission started. Move before the meter rises.';
+      restartBtn.classList.add('hidden');
+      renderNode();
+      state.timerId = setInterval(tickWarning, 3500);
+    }
+
+    function toggleSourceBox() {
+      if (sourceBoxEl.classList.contains('show')) {
+        sourceBoxEl.classList.remove('show');
+        copySourceBtn.textContent = 'Show Raw HTML';
+        return;
+      }
+      sourceBoxEl.value = document.documentElement.outerHTML;
+      sourceBoxEl.classList.add('show');
+      copySourceBtn.textContent = 'Hide Raw HTML';
+    }
+
+    function downloadOfflineCopy() {
+      const html = document.documentElement.outerHTML;
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'shadow-circuit-index.html';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      openHelpEl.textContent = 'Downloaded! Open shadow-circuit-index.html in Chrome, Edge, Safari, or Firefox.';
+    }
+
+    restartBtn.addEventListener('click', resetGame);
+    downloadBtn.addEventListener('click', downloadOfflineCopy);
+    copySourceBtn.addEventListener('click', toggleSourceBox);
+    showAccessReadyState();
+    resetGame();
+  </script>
+</body>
+</html>
