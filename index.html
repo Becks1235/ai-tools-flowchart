@@ -260,6 +260,7 @@
       <div class="utility-row">
         <button id="downloadBtn" class="utility-btn">Download Offline Copy</button>
         <button id="copySourceBtn" class="utility-btn">Show Raw HTML</button>
+        <button id="copyClipboardBtn" class="utility-btn">Copy HTML</button>
         <span id="openHelp">Open directly in any browser, no build step needed.</span>
       </div>
       <p class="access-note" id="accessNote"><strong>Deploy tip:</strong> This is now a single-file app. Upload just <code>index.html</code> to any static host (GitHub Pages, Netlify, Vercel static) or open it directly in a browser.</p>
@@ -268,8 +269,8 @@
       </noscript>
       <textarea id="sourceBox" class="source-box" readonly></textarea>
       <article class="story" id="story"></article>
-      <div class="notice" id="notice"></div>
-      <section class="choices" id="choices"></section>
+      <div class="notice" id="notice" aria-live="polite"></div>
+      <section class="choices" id="choices" aria-label="Choices"></section>
       <button id="restart" class="hidden">Restart Mission</button>
       <div class="footer">
         <span>Tip: Big noisy actions raise the warning meter quickly.</span>
@@ -292,6 +293,7 @@
     const accessNoteEl = document.getElementById('accessNote');
     const copySourceBtn = document.getElementById('copySourceBtn');
     const sourceBoxEl = document.getElementById('sourceBox');
+    const copyClipboardBtn = document.getElementById('copyClipboardBtn');
 
     const state = {
       node: 'start',
@@ -437,7 +439,7 @@
       const totalMinutes = 20 * 60 + state.minute;
       const h = Math.floor(totalMinutes / 60) % 24;
       const m = totalMinutes % 60;
-      const displayHour = h > 12 ? h - 12 : h;
+      const displayHour = h % 12 === 0 ? 12 : h % 12;
       const suffix = h >= 12 ? 'PM' : 'AM';
       clockTextEl.textContent = `Time: ${String(displayHour).padStart(2, '0')}:${String(m).padStart(2, '0')} ${suffix}`;
     }
@@ -574,6 +576,21 @@
       copySourceBtn.textContent = 'Hide Raw HTML';
     }
 
+
+
+    async function copyHtmlToClipboard() {
+      try {
+        await navigator.clipboard.writeText(document.documentElement.outerHTML);
+        openHelpEl.textContent = 'Copied! You can paste the full single-file game into a new .html file.';
+      } catch (error) {
+        sourceBoxEl.value = document.documentElement.outerHTML;
+        sourceBoxEl.classList.add('show');
+        sourceBoxEl.focus();
+        sourceBoxEl.select();
+        openHelpEl.textContent = 'Clipboard blocked. Raw HTML is selected below—copy it manually.';
+      }
+    }
+
     function downloadOfflineCopy() {
       const html = document.documentElement.outerHTML;
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -591,6 +608,7 @@
     restartBtn.addEventListener('click', resetGame);
     downloadBtn.addEventListener('click', downloadOfflineCopy);
     copySourceBtn.addEventListener('click', toggleSourceBox);
+    copyClipboardBtn.addEventListener('click', copyHtmlToClipboard);
     showAccessReadyState();
     resetGame();
   </script>
